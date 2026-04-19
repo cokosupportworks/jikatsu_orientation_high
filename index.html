@@ -359,7 +359,7 @@
     <!-- ==================== -->
     <div id="title-screen" class="screen" style="display: block;">
       <div class="ts-title">
-        <ruby>自立活動<rt>じりつかつどう</rt></ruby>について<br>かんがえよう
+        <ruby>自立活動<rt>じりつかつどう</rt></ruby><br>オリエンテーション
       </div>
       <button class="ts-start-btn" onclick="goToScreen('intro-screen')">
         <div class="btn-inner">はじめる</div>
@@ -434,8 +434,7 @@
       <!-- ヘッダー -->
       <div class="header">
         <button class="ms-back-btn" onclick="goToScreen('purpose-screen')">＜ もどる</button>
-        <div class="header-title">🌈 じりつかつどう えらぼう！</div>
-        <div class="header-sub">せんせいに みせよう</div>
+        <div class="header-title">🌈 れんしゅうしたいことを えらぼう！</div>
       </div>
 
       <!-- サイドバー (タブ) -->
@@ -551,7 +550,7 @@ function goToScreen(screenId) {
   } else if (screenId === 'purpose-screen') {
     speak("なんのために するの？");
   } else if (screenId === 'main-screen') {
-    speak("やってみたいことを えらんで、せんせいに みせよう");
+    speak("れんしゅうしたいことを えらんで、せんせいに みせよう");
   }
 }
 
