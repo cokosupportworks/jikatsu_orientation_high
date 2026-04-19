@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>自立活動オリエンテーション</title>
 <style>
   /* iOS/iPadOS特化の初期化と選択・ズーム防止 */
@@ -16,30 +16,31 @@
     touch-action: none; 
   }
 
-  body {
+  html, body {
+    width: 100%;
+    height: 100%;
     background: #222; /* アプリ外側の余白（黒） */
     overflow: hidden;
+    position: fixed; /* スクロールを完全にロック */
     font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
   }
 
-  /* 完全固定・スケーリングのベースコンテナ (1024x768) */
+  /* 完全固定・スケーリングのベースコンテナ */
   #app-wrapper {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100vw; height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
   }
 
   #app-container {
-    position: relative;
+    position: absolute;
+    top: 50%; left: 50%;
     width: 1024px;
     height: 768px;
     background: #fff8fd;
     overflow: hidden;
-    transform-origin: center center;
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    /* transformはJSで上書きされます */
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 20px rgba(0,0,0,0.8);
   }
 
   /* --- 画面切り替え用クラス --- */
@@ -130,7 +131,7 @@
     background: white; color: #555; font-size: 24px; font-weight: 900;
     border-radius: 15px; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     cursor: pointer; padding: 0;
-    z-index: 10; /* 追加：ボタンを一番手前に配置してクリックできるようにする */
+    z-index: 10;
   }
   .ps-back-btn:active { transform: translateY(2px); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
   
@@ -138,7 +139,7 @@
     position: absolute; top: 40px; left: 0; width: 1024px;
     text-align: center; font-size: 55px; font-weight: 900; color: #1fb14e;
     letter-spacing: 2px;
-    pointer-events: none; /* 追加：タイトル文字の枠がタッチを邪魔しないようにする */
+    pointer-events: none;
   }
   
   .ps-cards {
@@ -487,16 +488,31 @@
 </div>
 
 <script>
-/* ▼ スケーリング処理 (絶対不変レイアウトルール) ▼ */
+/* ▼ 完璧なスケーリング処理 ▼ */
 function resizeApp() {
   const baseW = 1024, baseH = 768;
-  const winW = window.innerWidth, winH = window.innerHeight;
-  const scale = Math.min(winW / baseW, winH / baseH);
+  // visualViewportが使える場合はそれを使用し、アドレスバー等による誤差を排除
+  const winW = window.visualViewport ? window.visualViewport.width : window.innerWidth;
+  const winH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  
+  // 画面に100%確実に収めるため、縦横比から最小の縮尺を計算し、さらに0.99を掛けてギリギリを避ける
+  const scale = Math.min(winW / baseW, winH / baseH) * 0.99;
+  
   const app = document.getElementById('app-container');
-  app.style.transform = `scale(${scale})`;
+  // transform: translate(-50%, -50%) と scale() を併用し、数学的に絶対中心＆画面内に配置
+  app.style.transform = `translate(-50%, -50%) scale(${scale})`;
+}
+
+// リサイズと画面の回転（縦横変更）のタイミングで確実に発火させる
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', resizeApp);
 }
 window.addEventListener('resize', resizeApp);
+window.addEventListener('orientationchange', () => setTimeout(resizeApp, 100));
+
+// 初期化時にも実行
 resizeApp();
+
 
 /* ▼ 音声読み上げ処理 ▼ */
 function speak(text) {
@@ -773,8 +789,6 @@ function resetAll() {
   closeResultModal();
   updateCardsState();
   updateBottomBar();
-  // 最初の画面に戻したい場合は goToScreen('title-screen') を呼ぶ
-  // goToScreen('title-screen');
 }
 
 function openAlert() {
