@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>じりつかつどう えらぼう！</title>
+<style>
+  /* iOS/iPadOS特化の初期化と選択・ズーム防止 */
+  * { 
+    box-sizing: border-box; 
+    margin: 0; 
+    padding: 0; 
+    -webkit-tap-highlight-color: transparent; 
+    -webkit-user-select: none; 
+    user-select: none; 
+    touch-action: none; 
+  }
+
+  body {
+    background: #222; /* アプリ外側の余白（黒） */
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+  }
+
+  /* 完全固定・スケーリングのベースコンテナ (1024x768) */
+  #app-wrapper {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  #app-container {
+    position: relative;
+    width: 1024px;
+    height: 768px;
+    background: #fff8fd;
+    overflow: hidden;
+    transform-origin: center center;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  }
+
+  /* --- 画面切り替え用クラス --- */
+  .screen {
+    position: absolute;
+    top: 0; left: 0;
+    width: 1024px; height: 768px;
+    display: none; /* デフォルトは非表示 */
+  }
+
+  /* === タイトル画面 === */
+  #title-screen {
+    background: #fffdf5; /* 暖かいクリーム色 */
+  }
+  .ts-title {
+    position: absolute; top: 240px; left: 0; width: 1024px;
+    text-align: center; font-size: 70px; font-weight: 900; color: #333;
+    line-height: 1.5;
+  }
+  .ts-title ruby {
+    ruby-align: center;
+  }
+  .ts-title rt {
+    font-size: 30px; font-weight: 900; color: #666;
+  }
+  .ts-start-btn {
+    position: absolute; top: 500px; left: 312px; width: 400px; height: 90px;
+    background: #dfaa30; color: white; font-size: 40px; font-weight: 900;
+    border-radius: 45px; border: none; box-shadow: 0 6px 0 #b58822; cursor: pointer;
+    padding: 0;
+  }
+  .ts-start-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #b58822; }
+  .btn-inner {
+    position: absolute; top: 4px; left: 4px; right: 4px; bottom: 4px;
+    display: flex; justify-content: center; align-items: center; pointer-events: none;
+  }
+
+  /* === 説明画面 (intro-screen) === */
+  #intro-screen {
+    background: #fffdf5;
+  }
+  .is-title {
+    position: absolute; top: 60px; left: 0; width: 1024px;
+    text-align: center; font-size: 55px; font-weight: 900; color: #b58b29;
+    letter-spacing: 2px;
+  }
+  .is-box {
+    position: absolute; top: 160px; left: 80px; width: 864px; height: 440px;
+    background: white; border: 8px solid #faedab; border-radius: 30px;
+  }
+  .is-desc {
+    position: absolute; top: 35px; left: 0; width: 100%;
+    text-align: center; font-size: 32px; font-weight: 900; color: #555;
+  }
+  .is-cards {
+    position: absolute; top: 110px; left: 42px; width: 764px; height: 290px;
+    display: flex; gap: 30px;
+  }
+  .is-card {
+    flex: 1; border-radius: 20px;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+  .is-card:active {
+    transform: scale(0.98);
+  }
+  .is-card.blue { background: #eff6ff; border: 4px solid #b8d4ff; }
+  .is-card.pink { background: #fff0f5; border: 4px solid #f8c1d5; }
+  .is-card-text { text-align: center; font-size: 26px; font-weight: 900; line-height: 1.6; margin-top: 20px; }
+  .is-card-text.blue { color: #1c4596; }
+  .is-card-text.pink { color: #8c1641; }
+  
+  .is-next-btn {
+    position: absolute; top: 640px; left: 312px; width: 400px; height: 80px;
+    background: #dfaa30; color: white; font-size: 34px; font-weight: 900;
+    border-radius: 20px; border: none; box-shadow: 0 5px 0 #b58822; cursor: pointer;
+    padding: 0;
+  }
+  .is-next-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #b58822; }
+
+  /* === 目的画面 (purpose-screen) === */
+  #purpose-screen {
+    background: #fffdf5;
+  }
+  .ps-back-btn {
+    position: absolute; top: 30px; left: 30px; width: 160px; height: 60px;
+    background: white; color: #555; font-size: 24px; font-weight: 900;
+    border-radius: 15px; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    cursor: pointer; padding: 0;
+    z-index: 10; /* 追加：ボタンを一番手前に配置してクリックできるようにする */
+  }
+  .ps-back-btn:active { transform: translateY(2px); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+  
+  .ps-title {
+    position: absolute; top: 40px; left: 0; width: 1024px;
+    text-align: center; font-size: 55px; font-weight: 900; color: #1fb14e;
+    letter-spacing: 2px;
+    pointer-events: none; /* 追加：タイトル文字の枠がタッチを邪魔しないようにする */
+  }
+  
+  .ps-cards {
+    position: absolute; top: 140px; left: 80px; width: 864px; height: 460px;
+    display: flex; flex-direction: column; gap: 25px;
+  }
+  
+  .ps-card {
+    position: relative; width: 100%; height: 130px;
+    background: white; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    cursor: pointer; transition: transform 0.1s;
+    overflow: hidden;
+  }
+  .ps-card:active { transform: scale(0.98); }
+  
+  .ps-card-line {
+    position: absolute; top: 0; left: 0; width: 20px; height: 100%;
+  }
+  .ps-card-line.pink { background: #f867a5; }
+  .ps-card-line.blue { background: #5c9df5; }
+  .ps-card-line.orange { background: #fa9c44; }
+
+  .ps-icon-circle {
+    position: absolute; top: 20px; left: 50px; width: 90px; height: 90px;
+    border-radius: 50%; display: flex; justify-content: center; align-items: center;
+    font-size: 50px; line-height: 1;
+  }
+  .ps-icon-circle.pink { background: #feebf2; }
+  .ps-icon-circle.blue { background: #e3f0fe; }
+  .ps-icon-circle.orange { background: #feead9; }
+
+  .ps-card-text {
+    position: absolute; top: 0; left: 170px; right: 30px; height: 130px;
+    display: flex; align-items: center;
+    font-size: 26px; font-weight: 900; color: #333; line-height: 1.5;
+  }
+
+  .ps-next-btn {
+    position: absolute; top: 640px; left: 262px; width: 500px; height: 80px;
+    background: #1fb14e; color: white; font-size: 34px; font-weight: 900;
+    border-radius: 20px; border: none; box-shadow: 0 5px 0 #148036; cursor: pointer;
+    padding: 0;
+  }
+  .ps-next-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #148036; }
+
+  /* === メイン画面 === */
+  #main-screen {
+    background: #fff8fd;
+  }
+  /* ヘッダー (絶対配置) */
+  .header {
+    position: absolute; top: 0; left: 0; width: 1024px; height: 70px;
+    background: linear-gradient(135deg, #ff6b9d, #ffb347);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 50;
+  }
+  .ms-back-btn {
+    position: absolute; top: 15px; left: 15px; width: 110px; height: 40px;
+    background: white; color: #ff6b9d; font-size: 18px; font-weight: 900;
+    border-radius: 20px; border: none; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    cursor: pointer; padding: 0;
+  }
+  .ms-back-btn:active { transform: translateY(2px); box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+  .header-title {
+    position: absolute; top: 5px; left: 140px; font-size: 32px; font-weight: 900; color: white;
+    line-height: 60px; text-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+  }
+  .header-sub {
+    position: absolute; top: 20px; right: 20px; font-size: 20px; font-weight: bold; color: white;
+  }
+
+  /* サイドバー (タブ領域 - 絶対配置) */
+  .sidebar {
+    position: absolute; top: 70px; left: 0; width: 250px; height: 598px;
+    padding: 10px; background: #ffeeef; border-right: 2px solid #fcc2d7;
+  }
+  .tab {
+    position: relative; width: 230px; height: 85px; margin-bottom: 13px;
+    border-radius: 15px; border: 4px solid transparent; background: white;
+    cursor: pointer; padding: 0;
+  }
+  .tab-inner {
+    position: absolute; top: 4px; left: 4px; right: 4px; bottom: 4px;
+    display: flex; justify-content: center; align-items: center;
+    font-size: 20px; font-weight: 900; text-align: center; border-radius: 8px;
+  }
+
+  /* メインコンテンツ (カード領域) */
+  .content-area {
+    position: absolute; top: 70px; left: 250px; width: 774px; height: 598px;
+    background: #fff8fd;
+  }
+  .section-title {
+    position: absolute; top: 10px; left: 20px; width: 734px; height: 40px;
+    border-radius: 20px; font-size: 22px; font-weight: 900;
+    line-height: 40px; text-align: center;
+  }
+  .cards-grid {
+    position: absolute; top: 60px; left: 20px; width: 734px; height: 520px;
+    display: grid; grid-template-columns: 360px 360px; grid-template-rows: 95px 95px 95px 95px 95px;
+    gap: 12px 14px;
+  }
+  .card {
+    position: relative; background: white; border: 4px solid #e8e8e8;
+    border-radius: 16px; cursor: pointer; padding: 0;
+  }
+  .card-emoji {
+    position: absolute; top: 15px; left: 10px; width: 60px; height: 60px;
+    font-size: 55px; line-height: 60px; text-align: center;
+  }
+  .card-name {
+    position: absolute; top: 10px; left: 80px; width: 220px; height: 30px;
+    font-size: 20px; font-weight: 900; color: #333;
+    line-height: 30px; white-space: nowrap; overflow: hidden;
+  }
+  .card-desc {
+    position: absolute; top: 45px; left: 80px; width: 220px; height: 40px;
+    font-size: 14px; font-weight: bold; color: #666; line-height: 1.3;
+  }
+  .card-badge {
+    position: absolute; top: -15px; right: 10px; padding: 2px 8px;
+    border-radius: 10px; font-size: 14px; font-weight: 900; border: 2px solid white;
+  }
+  .card-check {
+    position: absolute; top: 25px; right: 10px; width: 40px; height: 40px;
+    border-radius: 50%; border: 4px solid #ccc; background: white;
+  }
+  .card-check::after {
+    content: '✓'; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    font-size: 26px; font-weight: 900; color: white; text-align: center; line-height: 32px; opacity: 0;
+  }
+  .card.selected { border-color: #ff6b9d; background: #fff0f7; }
+  .card.selected .card-check { background: #ff6b9d; border-color: #ff6b9d; }
+  .card.selected .card-check::after { opacity: 1; }
+
+  /* ボトムバー */
+  .bottom-bar {
+    position: absolute; bottom: 0; left: 0; width: 1024px; height: 100px;
+    background: white; border-top: 4px solid #fcc2d7; z-index: 50;
+  }
+  .summary-emojis {
+    position: absolute; top: 25px; left: 20px; width: 600px; height: 50px;
+    display: flex; gap: 8px;
+  }
+  .summary-emoji-item {
+    width: 45px; height: 45px; font-size: 40px; line-height: 45px;
+  }
+  .show-btn {
+    position: absolute; top: 15px; right: 20px; width: 360px; height: 70px;
+    border: none; border-radius: 35px; background: linear-gradient(135deg, #ff6b9d, #ffb347);
+    color: white; font-size: 28px; font-weight: 900; cursor: pointer; box-shadow: 0 4px 10px rgba(255,107,157,0.4);
+    padding: 0;
+  }
+  .show-btn:disabled { background: #ccc; box-shadow: none; }
+
+  /* モーダル群 */
+  .result-modal {
+    display: none; position: absolute; top: 0; left: 0; width: 1024px; height: 768px;
+    background: rgba(255, 248, 253, 0.98); z-index: 200;
+  }
+  .rm-header {
+    position: absolute; top: 20px; left: 0; width: 1024px;
+    text-align: center; font-size: 40px; font-weight: 900; color: #ff6b9d;
+  }
+  .rm-grid {
+    position: absolute; top: 100px; left: 40px; width: 944px; height: 520px;
+    display: grid; grid-template-columns: 300px 300px 300px; grid-template-rows: 120px 120px 120px 120px; gap: 13px 22px;
+  }
+  .rm-slot {
+    position: relative; background: white; border: 4px solid #fcc2d7; border-radius: 20px; visibility: hidden;
+    cursor: pointer; transition: transform 0.1s;
+  }
+  .rm-slot:active { transform: scale(0.96); }
+  .rm-emoji {
+    position: absolute; top: 15px; left: 15px; font-size: 80px; line-height: 90px;
+  }
+  .rm-name {
+    position: absolute; top: 35px; left: 110px; width: 175px; height: 50px;
+    font-size: 22px; font-weight: 900; color: #333; line-height: 25px; display: flex; align-items: center;
+  }
+  .rm-btn-close, .rm-btn-reset {
+    position: absolute; bottom: 30px; width: 280px; height: 80px;
+    border-radius: 40px; font-size: 32px; font-weight: 900; padding: 0;
+  }
+  .rm-btn-close { left: 212px; border: 4px solid #f783ac; background: white; color: #d6336c; }
+  .rm-btn-reset { right: 212px; border: 4px solid #ddd; background: white; color: #666; }
+
+  .alert-modal {
+    display: none; position: absolute; top: 0; left: 0; width: 1024px; height: 768px;
+    background: rgba(0,0,0,0.6); z-index: 300;
+  }
+  .alert-box {
+    position: absolute; top: 284px; left: 262px; width: 500px; height: 200px;
+    background: white; border-radius: 20px; border: 8px solid #ff6b9d;
+  }
+  .alert-msg {
+    position: absolute; top: 50px; left: 0; width: 500px;
+    text-align: center; font-size: 30px; font-weight: 900; color: #333;
+  }
+  .alert-btn {
+    position: absolute; bottom: 20px; left: 150px; width: 200px; height: 60px;
+    background: #ff6b9d; color: white; border: none; border-radius: 30px;
+    font-size: 26px; font-weight: 900; padding: 0;
+  }
+</style>
+</head>
+<body>
+
+<div id="app-wrapper">
+  <div id="app-container">
+    
+    <!-- ==================== -->
+    <!-- 1. タイトル画面      -->
+    <!-- ==================== -->
+    <div id="title-screen" class="screen" style="display: block;">
+      <div class="ts-title">
+        <ruby>自立活動<rt>じりつかつどう</rt></ruby>について<br>かんがえよう
+      </div>
+      <button class="ts-start-btn" onclick="goToScreen('intro-screen')">
+        <div class="btn-inner">はじめる</div>
+      </button>
+    </div>
+
+    <!-- ==================== -->
+    <!-- 2. 説明画面          -->
+    <!-- ==================== -->
+    <div id="intro-screen" class="screen">
+      <div class="is-title">じりつかつどう って なに？</div>
+      <div class="is-box">
+        <div class="is-desc">この ２つを れんしゅう する じかんです。</div>
+        <div class="is-cards">
+          <!-- 左のカード (青) -->
+          <div class="is-card blue" onclick="speak('ひとりで できることを、ふやす')">
+            <div style="font-size: 80px; line-height: 1;">⭐️</div>
+            <div class="is-card-text blue">ひとりで できることを<br>ふやす</div>
+          </div>
+          <!-- 右のカード (ピンク) -->
+          <div class="is-card pink" onclick="speak('じょうずに、たすけて と つたえる')">
+            <div style="font-size: 80px; line-height: 1;">🤝</div>
+            <div class="is-card-text pink">じょうずに<br>「たすけて」と つたえる</div>
+          </div>
+        </div>
+      </div>
+      <button class="is-next-btn" onclick="goToScreen('purpose-screen')">
+        <div class="btn-inner">つぎへ ＞</div>
+      </button>
+    </div>
+
+    <!-- ==================== -->
+    <!-- 2.5. 目的画面        -->
+    <!-- ==================== -->
+    <div id="purpose-screen" class="screen">
+      <button class="ps-back-btn" onclick="goToScreen('intro-screen')">
+        <div class="btn-inner">＜ もどる</div>
+      </button>
+      
+      <div class="ps-title">なんのために するの？</div>
+      
+      <div class="ps-cards">
+        <!-- カード1 (ピンク) -->
+        <div class="ps-card" onclick="speak('たすけて を いって、じぶんを らくに するため。')">
+          <div class="ps-card-line pink"></div>
+          <div class="ps-icon-circle pink">🤝</div>
+          <div class="ps-card-text">「たすけて」をいって、 じぶんをらくにするため。</div>
+        </div>
+        <!-- カード2 (青) -->
+        <div class="ps-card" onclick="speak('じぶんで できることを ふやして、じしんを つけるため。')">
+          <div class="ps-card-line blue"></div>
+          <div class="ps-icon-circle blue">👍</div>
+          <div class="ps-card-text">じぶんでできることをふやして、 じしんをつけるため。</div>
+        </div>
+        <!-- カード3 (オレンジ) -->
+        <div class="ps-card" onclick="speak('そつぎょうした あと、じぶんの すきなことを えらんで せいかつ するため。')">
+          <div class="ps-card-line orange"></div>
+          <div class="ps-icon-circle orange">📍</div>
+          <div class="ps-card-text">そつぎょうしたあと、 じぶんのすきなことをえらんでせいかつするため。</div>
+        </div>
+      </div>
+      
+      <button class="ps-next-btn" onclick="goToScreen('main-screen')">
+        <div class="btn-inner">どんなれんしゅう？ ＞</div>
+      </button>
+    </div>
+
+    <!-- ==================== -->
+    <!-- 3. メイン画面        -->
+    <!-- ==================== -->
+    <div id="main-screen" class="screen">
+      <!-- ヘッダー -->
+      <div class="header">
+        <button class="ms-back-btn" onclick="goToScreen('purpose-screen')">＜ もどる</button>
+        <div class="header-title">🌈 じりつかつどう えらぼう！</div>
+        <div class="header-sub">せんせいに みせよう</div>
+      </div>
+
+      <!-- サイドバー (タブ) -->
+      <div class="sidebar" id="sidebar"></div>
+
+      <!-- メインコンテンツ -->
+      <div class="content-area">
+        <div class="section-title" id="section-title"></div>
+        <div class="cards-grid" id="cards-grid"></div>
+      </div>
+
+      <!-- ボトムバー -->
+      <div class="bottom-bar">
+        <div class="summary-emojis" id="summary-emojis"></div>
+        <button class="show-btn" id="show-btn" disabled onclick="onShowBtnClick()">
+          <div class="btn-inner" id="show-btn-text">えらんでね…</div>
+        </button>
+      </div>
+    </div>
+
+    <!-- モーダル類 (全画面共有) -->
+    <div class="result-modal" id="result-modal">
+      <div class="rm-header">⭐ えらんだこと ⭐</div>
+      <div class="rm-grid" id="rm-grid">
+        <script>
+          for(let i=0; i<12; i++){
+            document.write(`
+              <div class="rm-slot" id="rm-slot-${i}" onclick="speakResultItem(${i})">
+                <div class="rm-emoji" id="rm-emoji-${i}"></div>
+                <div class="rm-name" id="rm-name-${i}"></div>
+              </div>
+            `);
+          }
+        </script>
+      </div>
+      <button class="rm-btn-close" onclick="closeResultModal()">
+        <div class="btn-inner">✕ もどる</div>
+      </button>
+      <button class="rm-btn-reset" onclick="resetAll()">
+        <div class="btn-inner">🔄 やりなおす</div>
+      </button>
+    </div>
+
+    <div class="alert-modal" id="alert-modal">
+      <div class="alert-box">
+        <div class="alert-msg">えらべるのは 12こ までだよ</div>
+        <button class="alert-btn" onclick="closeAlert()">
+          <div class="btn-inner">わかった</div>
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ▼ スケーリング処理 (絶対不変レイアウトルール) ▼ */
+function resizeApp() {
+  const baseW = 1024, baseH = 768;
+  const winW = window.innerWidth, winH = window.innerHeight;
+  const scale = Math.min(winW / baseW, winH / baseH);
+  const app = document.getElementById('app-container');
+  app.style.transform = `scale(${scale})`;
+}
+window.addEventListener('resize', resizeApp);
+resizeApp();
+
+/* ▼ 音声読み上げ処理 ▼ */
+function speak(text) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  
+  let cleanText = text;
+  try {
+    cleanText = text.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '');
+  } catch (e) {}
+
+  const msg = new SpeechSynthesisUtterance(cleanText);
+  msg.lang = 'ja-JP';
+  msg.rate = 0.9; 
+  window.speechSynthesis.speak(msg);
+}
+
+/* ▼ 画面切り替え処理 ▼ */
+function goToScreen(screenId) {
+  // 全画面非表示
+  document.getElementById('title-screen').style.display = 'none';
+  document.getElementById('intro-screen').style.display = 'none';
+  document.getElementById('purpose-screen').style.display = 'none';
+  document.getElementById('main-screen').style.display = 'none';
+  
+  // 指定画面を表示
+  document.getElementById(screenId).style.display = 'block';
+
+  // 画面に合わせた読み上げ
+  if (screenId === 'intro-screen') {
+    speak("じりつかつどうってなに？。このふたつをれんしゅうするじかんです。");
+  } else if (screenId === 'purpose-screen') {
+    speak("なんのために するの？");
+  } else if (screenId === 'main-screen') {
+    speak("やってみたいことを えらんで、せんせいに みせよう");
+  }
+}
+
+/* ▼ データ定義 ▼ */
+const categories = [
+  { id:1, label:"💖 こころとからだ", color:"#d6336c", bg:"#fff0f5", borderColor:"#f783ac",
+    title:"💖 こころと からだの けんこう", items:[
+    {emoji:"😮‍💨", name:"ゆっくり いきをする", desc:"おちついた ふかいきを するよ", badge:null},
+    {emoji:"🪑", name:"いすに すわる", desc:"よい しせいで すわるよ", badge:"かんたん"},
+    {emoji:"🖐️", name:"てを あらう", desc:"せっけんで きれいに あらうよ", badge:"かんたん"},
+    {emoji:"🪥", name:"はみがきを する", desc:"はを みがく しゅうかんだよ", badge:null},
+    {emoji:"😴", name:"よい ねむり", desc:"きまった じかんに ねむるよ", badge:null},
+    {emoji:"🏃", name:"うんどうを たのしむ", desc:"からだを うごかすよ", badge:null},
+    {emoji:"🍱", name:"たべものの れんしゅう", desc:"いろんな たべものに なれるよ", badge:"サポート"},
+    {emoji:"😊", name:"きもちをつたえる", desc:"いたい・つかれた を いうよ", badge:"サポート"},
+    {emoji:"🎵", name:"おとや ひかり", desc:"いろんな かんかくに なれるよ", badge:"かんかく"},
+    {emoji:"🤗", name:"ふれられること", desc:"あんしんして ふれられるよ", badge:"かんかく"}
+  ]},
+  { id:2, label:"👥 なかまといっしょ", color:"#e67700", bg:"#fff9db", borderColor:"#ffd43b",
+    title:"👥 なかまと いっしょに すること", items:[
+    {emoji:"👋", name:"あいさつを する", desc:"おはよう・さようなら だよ", badge:"かんたん"},
+    {emoji:"🎮", name:"みんなで あそぶ", desc:"ルールを まもって あそぶよ", badge:null},
+    {emoji:"🙋", name:"はっぴょうする", desc:"じぶんのことを はなすよ", badge:null},
+    {emoji:"🤝", name:"いっしょに さぎょう", desc:"みんなと ちからを あわせるよ", badge:null},
+    {emoji:"🛒", name:"おかいものを する", desc:"おみせで えらんで かうよ", badge:null},
+    {emoji:"🎁", name:"おくりものを わたす", desc:"「どうぞ」と わたすよ", badge:"かんたん"},
+    {emoji:"🧩", name:"すわって いっしょに", desc:"おちついて そばに いるよ", badge:"サポート"},
+    {emoji:"👀", name:"みんなを みる", desc:"せんせいや ともだちを みるよ", badge:"サポート"},
+    {emoji:"📸", name:"カードで つたえる", desc:"えや カードで はなすよ", badge:"サポート"},
+    {emoji:"🌟", name:"すきなことを やる", desc:"すきなことで かかわるよ", badge:"サポート"}
+  ]},
+  { id:3, label:"🗣️ きもちとことば", color:"#2f9e44", bg:"#f0fff4", borderColor:"#74c476",
+    title:"🗣️ きもちと ことばの つたえかた", items:[
+    {emoji:"😄", name:"きもちを いう", desc:"うれしい・かなしい を いうよ", badge:null},
+    {emoji:"🆘", name:"たすけを もとめる", desc:"「たすけて」と いうよ", badge:"かんたん"},
+    {emoji:"🙅", name:"いやを つたえる", desc:"「いや」と つたえるよ", badge:"かんたん"},
+    {emoji:"📝", name:"きもちを かく", desc:"えや もじで あらわすよ", badge:null},
+    {emoji:"🎤", name:"はっきり はなす", desc:"わかりやすく はなすよ", badge:null},
+    {emoji:"👂", name:"はなしを きく", desc:"さいごまで きくよ", badge:null},
+    {emoji:"📱", name:"タブレットで", desc:"アプリで きもちを つたえるよ", badge:"サポート"},
+    {emoji:"🃏", name:"えカードを つかう", desc:"えやシンボルで こたえるよ", badge:"サポート"},
+    {emoji:"💬", name:"「はい」と こたえる", desc:"こえを かけられたら こえや サインで こたえるよ", badge:"サポート"},
+    {emoji:"🔔", name:"ベルで つたえる", desc:"どうぐで きもちを しらせるよ", badge:"サポート"}
+  ]},
+  { id:4, label:"🧠 かんがえるちから", color:"#1971c2", bg:"#e8f4ff", borderColor:"#74c0fc",
+    title:"🧠 かんがえる ちから・まなぶ ちから", items:[
+    {emoji:"🧩", name:"パズルや クイズ", desc:"かんがえながら とくよ", badge:null},
+    {emoji:"📅", name:"よていを しる", desc:"なにをするか かくにんするよ", badge:null},
+    {emoji:"🔢", name:"かずを かぞえる", desc:"かぞえたり けいさんしたりする ちからを のばすよ", badge:null},
+    {emoji:"✍️", name:"もじを かく", desc:"かく ちからを のばすよ", badge:null},
+    {emoji:"💡", name:"こまったとき", desc:"どうすれば いいか かんがえるよ", badge:null},
+    {emoji:"📖", name:"もじを よむ", desc:"じを よんで いみを しるよ", badge:null},
+    {emoji:"🖼️", name:"えで じゅんばん", desc:"えを みて つぎを かんがえるよ", badge:"サポート"},
+    {emoji:"⏰", name:"じかんを しる", desc:"じかんの かんかくを しるよ", badge:"サポート"},
+    {emoji:"🎨", name:"つくることを たのしむ", desc:"つくる ちからを のばすよ", badge:"かんたん"},
+    {emoji:"🔍", name:"みつける・えらぶ", desc:"すきなものを えらぶよ", badge:"サポート"}
+  ]},
+  { id:5, label:"🖐️ かっこよくうごく", color:"#7048e8", bg:"#f5f0ff", borderColor:"#b197fc",
+    title:"🖐️ かっこよく うごく", items:[
+    {emoji:"✂️", name:"はさみを つかう", desc:"かみを きる れんしゅうだよ", badge:null},
+    {emoji:"✏️", name:"えんぴつで かく", desc:"せんや じを かくよ", badge:null},
+    {emoji:"🧵", name:"てさきの れんしゅう", desc:"こまかい うごきを するよ", badge:null},
+    {emoji:"👟", name:"じぶんで きがえる", desc:"ふくや くつを きるよ", badge:null},
+    {emoji:"🚶", name:"いどうする", desc:"ろうかや かいだん など いろんなばしょを あるくよ", badge:null},
+    {emoji:"💻", name:"タブレットを つかう", desc:"まなびの どうぐを つかうよ", badge:null},
+    {emoji:"🖐️", name:"てを のばす", desc:"いろんな ものに さわるよ", badge:"かんかく"},
+    {emoji:"🧸", name:"ものを もつ・おく", desc:"きめた ばしょに おくよ", badge:"かんたん"},
+    {emoji:"🚰", name:"みずや もの", desc:"みずや どうぐに なれるよ", badge:"かんかく"},
+    {emoji:"🎯", name:"ねらって うごく", desc:"てと めで まとを ねらうよ", badge:null}
+  ]},
+  { id:6, label:"🏫 まわりのかんきょう", color:"#c92a2a", bg:"#fff0ee", borderColor:"#ff8787",
+    title:"🏫 まわりの かんきょうに なれる", items:[
+    {emoji:"🔊", name:"おとに なれる", desc:"いろんな おとに なれるよ", badge:"かんかく"},
+    {emoji:"💡", name:"あかるさに なれる", desc:"かがやきや ひかりに なれるよ", badge:"かんかく"},
+    {emoji:"🌡️", name:"きおんに あわせる", desc:"あつい・さむいに あわせて ふくを かえるよ", badge:null},
+    {emoji:"🚦", name:"ルールを まもる", desc:"ろうかは あるく など ルールを まもるよ", badge:null},
+    {emoji:"📋", name:"よていを みて うごく", desc:"よていひょうを みたり つくったりして みとおしを もつよ", badge:null},
+    {emoji:"🧹", name:"そうじや かたづけ", desc:"まわりを きれいにするよ", badge:"かんたん"},
+    {emoji:"⏱️", name:"きまった じかんに", desc:"はじまり・おわりで うごくよ", badge:null},
+    {emoji:"🪞", name:"ひとりで ととのえる", desc:"みだしなみを じぶんでするよ", badge:null},
+    {emoji:"🌿", name:"しずかな ばしょ", desc:"きもちを おちつけるよ", badge:"サポート"},
+    {emoji:"🎒", name:"もちものを ようい", desc:"ひつような ものを まとめるよ", badge:null}
+  ]}
+];
+
+/* ▼ アプリケーション状態 ▼ */
+let activeTab = 0;
+let selectedItems = []; // { key, emoji, name }
+const MAX_SELECT = 12;
+
+/* ▼ レンダリング処理 ▼ */
+function initSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  sidebar.innerHTML = categories.map((c, i) => `
+    <div class="tab" id="tab-${i}" onclick="onTabClick(${i})">
+      <div class="tab-inner" id="tab-inner-${i}">${c.label}</div>
+    </div>
+  `).join('');
+}
+
+function onTabClick(index) {
+  speak(categories[index].label);
+  switchTab(index);
+}
+
+function updateSidebarState() {
+  categories.forEach((c, i) => {
+    const tab = document.getElementById(`tab-${i}`);
+    const inner = document.getElementById(`tab-inner-${i}`);
+    if (i === activeTab) {
+      tab.style.borderColor = c.color;
+      tab.style.background = c.color;
+      inner.style.color = "white";
+    } else {
+      tab.style.borderColor = c.borderColor;
+      tab.style.background = "white";
+      inner.style.color = c.color;
+    }
+  });
+}
+
+function renderCards() {
+  const cat = categories[activeTab];
+  const st = document.getElementById('section-title');
+  st.textContent = cat.title;
+  st.style.background = cat.bg;
+  st.style.color = cat.color;
+
+  const grid = document.getElementById('cards-grid');
+  grid.innerHTML = cat.items.map((item, i) => {
+    const key = `${activeTab}-${i}`;
+    let badgeHtml = '';
+    if (item.badge) {
+      const bg = item.badge === 'かんたん' ? '#d3f9d8' : item.badge === 'サポート' ? '#fff3bf' : '#ffe8cc';
+      const col = item.badge === 'かんたん' ? '#2b8a3e' : item.badge === 'サポート' ? '#e67700' : '#d6640a';
+      badgeHtml = `<div class="card-badge" style="background:${bg}; color:${col};">${item.badge}</div>`;
+    }
+    return `
+      <div class="card" id="card-${key}" onclick="toggleCard('${key}', '${item.emoji}', '${item.name}', '${item.desc}')">
+        <div class="card-emoji">${item.emoji}</div>
+        <div class="card-name">${item.name}</div>
+        <div class="card-desc">${item.desc}</div>
+        ${badgeHtml}
+        <div class="card-check"></div>
+      </div>
+    `;
+  }).join('');
+  updateCardsState();
+}
+
+function updateCardsState() {
+  const cat = categories[activeTab];
+  cat.items.forEach((item, i) => {
+    const key = `${activeTab}-${i}`;
+    const card = document.getElementById(`card-${key}`);
+    if (card) {
+      const isSel = selectedItems.some(s => s.key === key);
+      if (isSel) {
+        card.classList.add('selected');
+      } else {
+        card.classList.remove('selected');
+      }
+    }
+  });
+}
+
+function updateBottomBar() {
+  const summary = document.getElementById('summary-emojis');
+  const btn = document.getElementById('show-btn');
+  const btnText = document.getElementById('show-btn-text');
+
+  summary.innerHTML = selectedItems.map(item => `
+    <div class="summary-emoji-item">${item.emoji}</div>
+  `).join('');
+
+  if (selectedItems.length === 0) {
+    btn.disabled = true;
+    btnText.textContent = 'えらんでね…';
+  } else {
+    btn.disabled = false;
+    btnText.textContent = `せんせいに みせる！ (${selectedItems.length}こ)`;
+  }
+}
+
+/* ▼ 操作ロジック ▼ */
+function switchTab(index) {
+  activeTab = index;
+  updateSidebarState();
+  renderCards();
+}
+
+function toggleCard(key, emoji, name, desc) {
+  speak(name + "。" + desc);
+  const index = selectedItems.findIndex(item => item.key === key);
+  if (index >= 0) {
+    selectedItems.splice(index, 1);
+  } else {
+    if (selectedItems.length >= MAX_SELECT) {
+      openAlert();
+      return;
+    }
+    selectedItems.push({ key, emoji, name });
+  }
+  updateCardsState();
+  updateBottomBar();
+}
+
+/* ▼ モーダルロジック ▼ */
+function speakResultItem(index) {
+  if (index < selectedItems.length) {
+    speak(selectedItems[index].name);
+  }
+}
+
+function openResultModal() {
+  if (selectedItems.length === 0) return;
+  for(let i=0; i<12; i++){
+    const slot = document.getElementById(`rm-slot-${i}`);
+    const emj = document.getElementById(`rm-emoji-${i}`);
+    const nm = document.getElementById(`rm-name-${i}`);
+    if (i < selectedItems.length) {
+      const item = selectedItems[i];
+      emj.textContent = item.emoji;
+      nm.textContent = item.name;
+      slot.style.visibility = 'visible';
+    } else {
+      slot.style.visibility = 'hidden';
+    }
+  }
+  document.getElementById('result-modal').style.display = 'block';
+}
+
+function closeResultModal() {
+  document.getElementById('result-modal').style.display = 'none';
+}
+
+function resetAll() {
+  selectedItems = [];
+  closeResultModal();
+  updateCardsState();
+  updateBottomBar();
+  // 最初の画面に戻したい場合は goToScreen('title-screen') を呼ぶ
+  // goToScreen('title-screen');
+}
+
+function openAlert() {
+  speak("えらべるのは、12こ までだよ");
+  document.getElementById('alert-modal').style.display = 'block';
+}
+function closeAlert() {
+  document.getElementById('alert-modal').style.display = 'none';
+}
+
+function onShowBtnClick() {
+  speak("せんせいにみせる");
+  openResultModal();
+}
+
+/* ▼ 初期化実行 ▼ */
+initSidebar();
+switchTab(0);
+updateBottomBar();
+
+</script>
+</body>
+</html>
