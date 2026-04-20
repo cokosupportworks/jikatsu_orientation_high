@@ -59,19 +59,14 @@
   #title-screen {
     background: #fffdf5; /* 暖かいクリーム色 */
   }
-  .ts-title {
-    position: absolute; top: 240px; left: 0; width: 1024px;
-    text-align: center; font-size: 70px; font-weight: 900; color: #333;
-    line-height: 1.5;
-  }
-  .ts-title ruby {
-    ruby-align: center;
-  }
-  .ts-title rt {
-    font-size: 30px; font-weight: 900; color: #666;
+  .ts-image {
+    position: absolute; top: 307px; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 628px; height: 563px;
+    object-fit: contain;
   }
   .ts-start-btn {
-    position: absolute; top: 500px; left: 312px; width: 400px; height: 90px;
+    position: absolute; top: 620px; left: 312px; width: 400px; height: 90px;
     background: #dfaa30; color: white; font-size: 40px; font-weight: 900;
     border-radius: 45px; border: none; box-shadow: 0 6px 0 #b58822; cursor: pointer;
     padding: 0;
@@ -358,9 +353,7 @@
     <!-- 1. タイトル画面      -->
     <!-- ==================== -->
     <div id="title-screen" class="screen" style="display: block;">
-      <div class="ts-title">
-        <ruby>自立活動<rt>じりつかつどう</rt></ruby><br>オリエンテーション
-      </div>
+      <img src="jikatsu.png" alt="自立活動オリエンテーション" class="ts-image">
       <button class="ts-start-btn" onclick="goToScreen('intro-screen')">
         <div class="btn-inner">はじめる</div>
       </button>
@@ -559,41 +552,41 @@ const categories = [
   { id:1, label:"💖 こころとからだ", color:"#d6336c", bg:"#fff0f5", borderColor:"#f783ac",
     title:"💖 こころと からだの けんこう", items:[
     {emoji:"😮‍💨", name:"ゆっくり いきをする", desc:"おちついた ふかいきを するよ", badge:null},
-    {emoji:"🪑", name:"いすに すわる", desc:"よい しせいで すわるよ", badge:"かんたん"},
-    {emoji:"🖐️", name:"てを あらう", desc:"せっけんで きれいに あらうよ", badge:"かんたん"},
+    {emoji:"🪑", name:"いすに すわる", desc:"よい しせいで すわるよ", badge:null},
+    {emoji:"🖐️", name:"てを あらう", desc:"せっけんで きれいに あらうよ", badge:null},
     {emoji:"🪥", name:"はみがきを する", desc:"はを みがく しゅうかんだよ", badge:null},
     {emoji:"😴", name:"よい ねむり", desc:"きまった じかんに ねむるよ", badge:null},
     {emoji:"🏃", name:"うんどうを たのしむ", desc:"からだを うごかすよ", badge:null},
-    {emoji:"🍱", name:"たべものの れんしゅう", desc:"いろんな たべものに なれるよ", badge:"サポート"},
-    {emoji:"😊", name:"きもちをつたえる", desc:"いたい・つかれた を いうよ", badge:"サポート"},
-    {emoji:"🎵", name:"おとや ひかり", desc:"いろんな かんかくに なれるよ", badge:"かんかく"},
-    {emoji:"🤗", name:"ふれられること", desc:"あんしんして ふれられるよ", badge:"かんかく"}
+    {emoji:"🍱", name:"たべものの れんしゅう", desc:"いろんな たべものに なれるよ", badge:null},
+    {emoji:"😊", name:"きもちをつたえる", desc:"いたい・つかれた を いうよ", badge:null},
+    {emoji:"🎵", name:"おとや ひかり", desc:"いろんな かんかくに なれるよ", badge:null},
+    {emoji:"🤗", name:"ふれられること", desc:"あんしんして ふれられるよ", badge:null}
   ]},
   { id:2, label:"👥 なかまといっしょ", color:"#e67700", bg:"#fff9db", borderColor:"#ffd43b",
     title:"👥 なかまと いっしょに すること", items:[
-    {emoji:"👋", name:"あいさつを する", desc:"おはよう・さようなら だよ", badge:"かんたん"},
+    {emoji:"👋", name:"あいさつを する", desc:"おはよう・さようなら だよ", badge:null},
     {emoji:"🎮", name:"みんなで あそぶ", desc:"ルールを まもって あそぶよ", badge:null},
     {emoji:"🙋", name:"はっぴょうする", desc:"じぶんのことを はなすよ", badge:null},
     {emoji:"🤝", name:"いっしょに さぎょう", desc:"みんなと ちからを あわせるよ", badge:null},
     {emoji:"🛒", name:"おかいものを する", desc:"おみせで えらんで かうよ", badge:null},
-    {emoji:"🎁", name:"おくりものを わたす", desc:"「どうぞ」と わたすよ", badge:"かんたん"},
-    {emoji:"🧩", name:"すわって いっしょに", desc:"おちついて そばに いるよ", badge:"サポート"},
-    {emoji:"👀", name:"みんなを みる", desc:"せんせいや ともだちを みるよ", badge:"サポート"},
-    {emoji:"📸", name:"カードで つたえる", desc:"えや カードで はなすよ", badge:"サポート"},
-    {emoji:"🌟", name:"すきなことを やる", desc:"すきなことで かかわるよ", badge:"サポート"}
+    {emoji:"🎁", name:"おくりものを わたす", desc:"「どうぞ」と わたすよ", badge:null},
+    {emoji:"🧩", name:"すわって いっしょに", desc:"おちついて そばに いるよ", badge:null},
+    {emoji:"👀", name:"みんなを みる", desc:"せんせいや ともだちを みるよ", badge:null},
+    {emoji:"📸", name:"カードで つたえる", desc:"えや カードで はなすよ", badge:null},
+    {emoji:"🌟", name:"すきなことを やる", desc:"すきなことで かかわるよ", badge:null}
   ]},
   { id:3, label:"🗣️ きもちとことば", color:"#2f9e44", bg:"#f0fff4", borderColor:"#74c476",
     title:"🗣️ きもちと ことばの つたえかた", items:[
     {emoji:"😄", name:"きもちを いう", desc:"うれしい・かなしい を いうよ", badge:null},
-    {emoji:"🆘", name:"たすけを もとめる", desc:"「たすけて」と いうよ", badge:"かんたん"},
-    {emoji:"🙅", name:"いやを つたえる", desc:"「いや」と つたえるよ", badge:"かんたん"},
+    {emoji:"🆘", name:"たすけを もとめる", desc:"「たすけて」と いうよ", badge:null},
+    {emoji:"🙅", name:"いやを つたえる", desc:"「いや」と つたえるよ", badge:null},
     {emoji:"📝", name:"きもちを かく", desc:"えや もじで あらわすよ", badge:null},
     {emoji:"🎤", name:"はっきり はなす", desc:"わかりやすく はなすよ", badge:null},
     {emoji:"👂", name:"はなしを きく", desc:"さいごまで きくよ", badge:null},
-    {emoji:"📱", name:"タブレットで", desc:"アプリで きもちを つたえるよ", badge:"サポート"},
-    {emoji:"🃏", name:"えカードを つかう", desc:"えやシンボルで こたえるよ", badge:"サポート"},
-    {emoji:"💬", name:"「はい」と こたえる", desc:"こえを かけられたら こえや サインで こたえるよ", badge:"サポート"},
-    {emoji:"🔔", name:"ベルで つたえる", desc:"どうぐで きもちを しらせるよ", badge:"サポート"}
+    {emoji:"📱", name:"タブレットで つたえる", desc:"アプリで きもちを つたえるよ", badge:null},
+    {emoji:"🃏", name:"えカードを つかう", desc:"えやシンボルで こたえるよ", badge:null},
+    {emoji:"💬", name:"「はい」と こたえる", desc:"こえを かけられたら こえや サインで こたえるよ", badge:null},
+    {emoji:"🗣️", name:"ことばを おぼえる", desc:"もののなまえや ようすのことばを おぼえて つかうよ", badge:null}
   ]},
   { id:4, label:"🧠 かんがえるちから", color:"#1971c2", bg:"#e8f4ff", borderColor:"#74c0fc",
     title:"🧠 かんがえる ちから・まなぶ ちから", items:[
@@ -603,10 +596,10 @@ const categories = [
     {emoji:"✍️", name:"もじを かく", desc:"かく ちからを のばすよ", badge:null},
     {emoji:"💡", name:"こまったとき", desc:"どうすれば いいか かんがえるよ", badge:null},
     {emoji:"📖", name:"もじを よむ", desc:"じを よんで いみを しるよ", badge:null},
-    {emoji:"🖼️", name:"えで じゅんばん", desc:"えを みて つぎを かんがえるよ", badge:"サポート"},
-    {emoji:"⏰", name:"じかんを しる", desc:"じかんの かんかくを しるよ", badge:"サポート"},
-    {emoji:"🎨", name:"つくることを たのしむ", desc:"つくる ちからを のばすよ", badge:"かんたん"},
-    {emoji:"🔍", name:"みつける・えらぶ", desc:"すきなものを えらぶよ", badge:"サポート"}
+    {emoji:"🖼️", name:"えで じゅんばん", desc:"えを みて つぎを かんがえるよ", badge:null},
+    {emoji:"⏰", name:"じかんを しる", desc:"じかんの かんかくを しるよ", badge:null},
+    {emoji:"🎨", name:"つくることを たのしむ", desc:"つくる ちからを のばすよ", badge:null},
+    {emoji:"🔍", name:"みつける・えらぶ", desc:"すきなものを えらぶよ", badge:null}
   ]},
   { id:5, label:"🖐️ かっこよくうごく", color:"#7048e8", bg:"#f5f0ff", borderColor:"#b197fc",
     title:"🖐️ かっこよく うごく", items:[
@@ -616,23 +609,23 @@ const categories = [
     {emoji:"👟", name:"じぶんで きがえる", desc:"ふくや くつを きるよ", badge:null},
     {emoji:"🚶", name:"いどうする", desc:"ろうかや かいだん など いろんなばしょを あるくよ", badge:null},
     {emoji:"💻", name:"タブレットを つかう", desc:"まなびの どうぐを つかうよ", badge:null},
-    {emoji:"🖐️", name:"てを のばす", desc:"いろんな ものに さわるよ", badge:"かんかく"},
-    {emoji:"🧸", name:"ものを もつ・おく", desc:"きめた ばしょに おくよ", badge:"かんたん"},
-    {emoji:"🚰", name:"みずや もの", desc:"みずや どうぐに なれるよ", badge:"かんかく"},
+    {emoji:"🖐️", name:"てを のばす", desc:"いろんな ものに さわるよ", badge:null},
+    {emoji:"🧸", name:"ものを もつ・おく", desc:"きめた ばしょに おくよ", badge:null},
+    {emoji:"🙆", name:"うごきを まねする", desc:"おてほんと おなじ うごきをするよ", badge:null},
     {emoji:"🎯", name:"ねらって うごく", desc:"てと めで まとを ねらうよ", badge:null}
   ]},
   { id:6, label:"🏫 まわりのかんきょう", color:"#c92a2a", bg:"#fff0ee", borderColor:"#ff8787",
     title:"🏫 まわりの かんきょうに なれる", items:[
-    {emoji:"🔊", name:"おとに なれる", desc:"いろんな おとに なれるよ", badge:"かんかく"},
-    {emoji:"💡", name:"あかるさに なれる", desc:"かがやきや ひかりに なれるよ", badge:"かんかく"},
+    {emoji:"🔊", name:"おとに なれる", desc:"いろんな おとに なれるよ", badge:null},
+    {emoji:"💡", name:"あかるさに なれる", desc:"かがやきや ひかりに なれるよ", badge:null},
     {emoji:"🌡️", name:"きおんに あわせる", desc:"あつい・さむいに あわせて ふくを かえるよ", badge:null},
     {emoji:"🚦", name:"ルールを まもる", desc:"ろうかは あるく など ルールを まもるよ", badge:null},
     {emoji:"📋", name:"よていを みて うごく", desc:"よていひょうを みたり つくったりして みとおしを もつよ", badge:null},
-    {emoji:"🧹", name:"そうじや かたづけ", desc:"まわりを きれいにするよ", badge:"かんたん"},
+    {emoji:"🧹", name:"そうじや かたづけ", desc:"まわりを きれいにするよ", badge:null},
     {emoji:"⏱️", name:"きまった じかんに", desc:"はじまり・おわりで うごくよ", badge:null},
     {emoji:"🪞", name:"ひとりで ととのえる", desc:"みだしなみを じぶんでするよ", badge:null},
-    {emoji:"🌿", name:"しずかな ばしょ", desc:"きもちを おちつけるよ", badge:"サポート"},
-    {emoji:"🎒", name:"もちものを ようい", desc:"ひつような ものを まとめるよ", badge:null}
+    {emoji:"🌿", name:"しずかな ばしょ", desc:"きもちを おちつけるよ", badge:null},
+    {emoji:"📝", name:"メモちょうを つかう", desc:"だいじなことをメモする・ひとにかいてもらう おねがいをするよ", badge:null}
   ]}
 ];
 
@@ -811,6 +804,9 @@ function onShowBtnClick() {
 initSidebar();
 switchTab(0);
 updateBottomBar();
+
+
+
 
 </script>
 </body>
