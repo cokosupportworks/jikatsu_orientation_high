@@ -4,10 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>自立活動オリエンテーション</title>
+
+
     <!-- アプリアイコンの設定 -->
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <link rel="icon" href="apple-touch-icon.png">
-
 
 
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -639,6 +640,110 @@ let activeTab = 0;
 let selectedItems = []; // { key, emoji, name }
 const MAX_SELECT = 12;
 
+/* ▼ ストレージ（自動保存）処理 ▼ */
+const DB_NAME = 'JiritsuAppDB';
+const STORE_NAME = 'selections';
+
+// 端末内データベース(IndexedDB)を開く
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = (e) => {
+      e.target.result.createObjectStore(STORE_NAME);
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function saveToLocalDB(data) {
+  try {
+    const db = await openDB();
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).put(data, 'current_selection');
+  } catch(e) { console.warn('Local save failed', e); }
+}
+
+async function loadFromLocalDB() {
+  try {
+    const db = await openDB();
+    return new Promise(resolve => {
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const req = tx.objectStore(STORE_NAME).get('current_selection');
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => resolve(null);
+    });
+  } catch(e) { return null; }
+}
+
+let saveToServer = null;
+
+async function saveSelection() {
+  await saveToLocalDB(selectedItems); // 常にローカルに保存
+  if (saveToServer) {
+    saveToServer(selectedItems); // Canvas環境のみクラウド同期
+  }
+}
+
+async function loadSelection() {
+  const localData = await loadFromLocalDB();
+  if (localData && Array.isArray(localData)) {
+    selectedItems = localData;
+    updateCardsState();
+    updateBottomBar();
+  }
+}
+
+// Canvas環境用の同期処理設定
+if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+  (async () => {
+    try {
+      const firebaseConfig = JSON.parse(__firebase_config);
+      const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+      
+      const { initializeApp } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js");
+      const { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");
+      const { getFirestore, doc, setDoc, getDoc } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
+      
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+      let currentUser = null;
+      
+      saveToServer = async (data) => {
+        if (!currentUser) return;
+        const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'data', 'selections');
+        await setDoc(docRef, { items: data });
+      };
+      
+      onAuthStateChanged(auth, async (user) => {
+        if (user) {
+          currentUser = user;
+          const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'selections');
+          const snap = await getDoc(docRef);
+          if (snap.exists()) {
+            const data = snap.data();
+            if (data.items) {
+              selectedItems = data.items;
+              await saveToLocalDB(selectedItems);
+              updateCardsState();
+              updateBottomBar();
+            }
+          }
+        }
+      });
+      
+      if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+        await signInWithCustomToken(auth, __initial_auth_token);
+      } else {
+        await signInAnonymously(auth);
+      }
+    } catch (e) {
+      console.warn("Firebase init skipped:", e);
+    }
+  })();
+}
+
 /* ▼ レンダリング処理 ▼ */
 function initSidebar() {
   const sidebar = document.getElementById('sidebar');
@@ -741,17 +846,22 @@ function switchTab(index) {
 }
 
 function toggleCard(key, emoji, name, desc) {
-  speak(name + "。" + desc);
   const index = selectedItems.findIndex(item => item.key === key);
   if (index >= 0) {
+    // 選択を解除する（読み上げない）
     selectedItems.splice(index, 1);
   } else {
+    // まだ選ばれていないものをタッチした時のみ読み上げて選択する
     if (selectedItems.length >= MAX_SELECT) {
       openAlert();
       return;
     }
+    speak(name + "。" + desc);
     selectedItems.push({ key, emoji, name });
   }
+  
+  // 変更した内容を自動保存する
+  saveSelection();
   updateCardsState();
   updateBottomBar();
 }
@@ -787,6 +897,7 @@ function closeResultModal() {
 
 function resetAll() {
   selectedItems = [];
+  saveSelection(); // やり直した（空になった）状態も保存
   closeResultModal();
   updateCardsState();
   updateBottomBar();
@@ -810,8 +921,8 @@ initSidebar();
 switchTab(0);
 updateBottomBar();
 
-
-
+// 起動時に保存されている選択データを読み込む
+loadSelection();
 
 </script>
 </body>
